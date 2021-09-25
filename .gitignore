@@ -2,3 +2,5 @@
 /venv/
 /WD
 /lab*
+.idea/
+__pycache__/
