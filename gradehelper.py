@@ -27,7 +27,7 @@ def deleteDirectoryContent(folder):
             elif os.path.isdir(file_path):
                 shutil.rmtree(file_path)
         except Exception as e:
-            print('Failed to delete %s. Reason: %s' % (file_path, e))
+            createMessagePopUpBox(f"Failed to delete {file_path}. Reason:{e}. Check student directory")
 
 
 def createMessagePopUpBox(text):
@@ -135,7 +135,6 @@ class Window(QtWidgets.QMainWindow):
             else:
                 return -1
 
-        self.currentStudentGradesSubmitted = True
         if self.currentStudentGradesSubmitted or self.programStarted:
             nextUngradedStudent = next(filter(lambda studentDirectory:
                                               not os.path.exists(os.path.join(constants.LAB_DIRECTORY, studentDirectory,
