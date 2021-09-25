@@ -1,18 +1,42 @@
 import os
+import shutil
+import tokenize
+from bisect import bisect_left
 
 import pandas as pd
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QLabel, QLineEdit, QHBoxLayout, QWidget, QVBoxLayout, QPushButton
+from PyQt5.QtWidgets import QLabel, QLineEdit, QHBoxLayout, QWidget, QVBoxLayout, QPushButton, QMessageBox
 
 import constants
 
-#
-# for file in sorted(os.listdir(constants.LAB_DIRECTORY)):
-#     print(file)
+
+for file in sorted(os.listdir(constants.LAB_DIRECTORY)):
+    print(file)
 
 # create working folder to copy files that I'm viewing to
 if not os.path.exists(constants.WORKING_DIRECTORY):
     os.makedirs(constants.WORKING_DIRECTORY, exist_ok=True)
+
+
+# https://stackoverflow.com/questions/185936/how-to-delete-the-contents-of-a-folder
+def deleteDirectoryContent(folder):
+    for filename in os.listdir(folder):
+        file_path = os.path.join(folder, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print('Failed to delete %s. Reason: %s' % (file_path, e))
+
+
+def createMessagePopUpBox(text):
+    msg = QMessageBox()
+    msg.setWindowTitle("Error")
+    msg.setText(text)
+    msg.setIcon(QMessageBox.Critical)
+    msg.exec_()
 
 
 # pyqt window
@@ -104,39 +128,53 @@ class Window(QtWidgets.QMainWindow):
 
     # this function should get information for next student in the list that doesn't have a CSV already stored in the folder
     # if there is a grade csv already in the folder then load someone else
-
     def loadNextStudent(self):
-        # print("Write out csv for blah")
-        # print("Grade 0 can be asccessed with", self.gradeLayoutSetBoxes[0].text())
+        def binarySearch(students, studentName):
+            i = bisect_left(students, studentName)
+            if i != len(students) and students[i] == studentName:
+                return i
+            else:
+                return -1
+
         self.currentStudentGradesSubmitted = True
-        # this function shouldn't go load new student info
-        # unless submit was clicked or we are just loading into the program(first person loading)
         if self.currentStudentGradesSubmitted or self.programStarted:
             nextUngradedStudent = next(filter(lambda studentDirectory:
                                               not os.path.exists(os.path.join(constants.LAB_DIRECTORY, studentDirectory,
                                                                               "gradeHelper.csv")),
                                               self.studentDirectories), None)
-            self.currentStudentGradedIndex = nextUngradedStudent
+
+            self.currentStudentGradedIndex = binarySearch(self.studentDirectories, nextUngradedStudent)
             self.loadStudentInfo(nextUngradedStudent)
             self.clearGrades()
         else:
-            print("NOT SUBMITTED YET")  # THIS SHOULD GO TO PYQT CONSOLE SOMEWHERE - WORK ON THIS
-
+            createMessagePopUpBox("Grades have not been submitted yet")
         self.programStarted = False
 
     # load all info into form for current student
-    # WORK ON THIS
     def loadStudentInfo(self, student):
-        print(self.studentDirectories)
+        def findStudentID(text):
+            head = text.rstrip('0123456789')
+            tail = text[len(head):]
+            return tail
+
+        filePath = os.path.join(constants.LAB_DIRECTORY, student,
+                                constants.FILE_NAME)
+        file = open(filePath, "rb")
+        commentWithStudentID = None
+        for tokenType, token, start, end, line in tokenize.tokenize(file.readline):
+            if tokenType == tokenize.COMMENT and "id" in token.lower() and "student" in token.lower():
+                commentWithStudentID = token
+
+        studentID = findStudentID(commentWithStudentID)
+
         self.usernameLayoutTextSetBox.setText(student)
-        self.idLayoutTextSetBox.setText("215")
-
-        # copy the python files in directory to working directory(sometimes students have helper files so copy all files)
-        # overwrite similiar named files in working directory
-
-        # look for file that matches "lab4.py"
-        # this is in constants.FILE_NAME
-        # read info from it
+        self.idLayoutTextSetBox.setText(studentID)
+        deleteDirectoryContent(os.path.join(constants.WORKING_DIRECTORY))
+        try:
+            shutil.copytree(os.path.join(constants.LAB_DIRECTORY, student), os.path.join(constants.WORKING_DIRECTORY), dirs_exist_ok=True)
+        except Exception as e:
+            createMessagePopUpBox(
+                "Check the student directory; Could not load student's directory into working directory (WD)")
 
     # function to clear grades in the textboxes
     def clearGrades(self):
