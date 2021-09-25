@@ -9,7 +9,6 @@ from PyQt5.QtWidgets import QLabel, QLineEdit, QHBoxLayout, QWidget, QVBoxLayout
 
 import constants
 
-
 for file in sorted(os.listdir(constants.LAB_DIRECTORY)):
     print(file)
 
@@ -126,8 +125,8 @@ class Window(QtWidgets.QMainWindow):
 
         self.currentStudentGradesSubmitted = True
 
-    # this function should get information for next student in the list that doesn't have a CSV already stored in the folder
-    # if there is a grade csv already in the folder then load someone else
+    # Gets information for next student in the list that doesn't have a CSV already stored in the folder and replaces
+    # working directory with next student's files
     def loadNextStudent(self):
         def binarySearch(students, studentName):
             i = bisect_left(students, studentName)
@@ -145,19 +144,20 @@ class Window(QtWidgets.QMainWindow):
 
             self.currentStudentGradedIndex = binarySearch(self.studentDirectories, nextUngradedStudent)
             self.loadStudentInfo(nextUngradedStudent)
+            self.loadDirectoryWithStudentFiles(nextUngradedStudent)
             self.clearGrades()
         else:
             createMessagePopUpBox("Grades have not been submitted yet")
         self.programStarted = False
 
     # load all info into form for current student
-    def loadStudentInfo(self, student):
+    def loadStudentInfo(self, studentUsername):
         def findStudentID(text):
             head = text.rstrip('0123456789')
             tail = text[len(head):]
             return tail
 
-        filePath = os.path.join(constants.LAB_DIRECTORY, student,
+        filePath = os.path.join(constants.LAB_DIRECTORY, studentUsername,
                                 constants.FILE_NAME)
         file = open(filePath, "rb")
         commentWithStudentID = None
@@ -167,14 +167,19 @@ class Window(QtWidgets.QMainWindow):
 
         studentID = findStudentID(commentWithStudentID)
 
-        self.usernameLayoutTextSetBox.setText(student)
+        self.usernameLayoutTextSetBox.setText(studentUsername)
         self.idLayoutTextSetBox.setText(studentID)
+
+    def loadDirectoryWithStudentFiles(self, studentUsername):
         deleteDirectoryContent(os.path.join(constants.WORKING_DIRECTORY))
         try:
-            shutil.copytree(os.path.join(constants.LAB_DIRECTORY, student), os.path.join(constants.WORKING_DIRECTORY), dirs_exist_ok=True)
+            shutil.copytree(os.path.join(constants.LAB_DIRECTORY, studentUsername),
+                            os.path.join(constants.WORKING_DIRECTORY),
+                            dirs_exist_ok=True)
         except Exception as e:
             createMessagePopUpBox(
-                "Check the student directory; Could not load student's directory into working directory (WD)")
+                f"Check the student directory; Could not load student's directory into "
+                f"working directory: {constants.WORKING_DIRECTORY}")
 
     # function to clear grades in the textboxes
     def clearGrades(self):
