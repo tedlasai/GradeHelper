@@ -156,6 +156,9 @@ class Window(QtWidgets.QMainWindow):
             tail = text[len(head):]
             return tail
 
+        if not studentUsername:
+            createMessagePopUpBox("Could not find next student")
+
         filePath = os.path.join(constants.LAB_DIRECTORY, studentUsername,
                                 constants.FILE_NAME)
         file = open(filePath, "rb")
