@@ -67,6 +67,14 @@ class Window(QtWidgets.QMainWindow):
         self.idLayout.addWidget(self.idLayoutText)
         self.idLayout.addWidget(self.idLayoutTextSetBox)
 
+        self.feedbackLayoutText = QLabel("Feedback: ", self)
+        self.feedbackLayoutTextSetBox = QLineEdit(self)
+        self.feedbackLayoutTextSetBox.setText("")
+
+        self.feedbackLayout = QHBoxLayout(self)
+        self.feedbackLayout.addWidget(self.feedbackLayoutText)
+        self.feedbackLayout.addWidget(self.feedbackLayoutTextSetBox)
+
         self.gradeLayouts = []
         self.gradeLayoutSetBoxes = []
         for i in range(constants.NUM_GRADES):
@@ -88,6 +96,7 @@ class Window(QtWidgets.QMainWindow):
         self.verticalLayout = QVBoxLayout(self)
         self.verticalLayout.addLayout(self.usernameLayout)
         self.verticalLayout.addLayout(self.idLayout)
+        self.verticalLayout.addLayout(self.feedbackLayout)
 
         for layout in self.gradeLayouts:
             self.verticalLayout.addLayout(layout)
