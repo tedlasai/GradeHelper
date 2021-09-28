@@ -30,6 +30,12 @@ def deleteDirectoryContent(folder):
             createMessagePopUpBox(f"Failed to delete {file_path}. Reason:{e}. Check student directory")
 
 
+def findStudentID(text):
+    head = text.rstrip('0123456789')
+    tail = text[len(head):]
+    return tail
+
+
 def createMessagePopUpBox(text):
     msg = QMessageBox()
     msg.setWindowTitle("Error")
@@ -140,6 +146,9 @@ class Window(QtWidgets.QMainWindow):
                                               not os.path.exists(os.path.join(constants.LAB_DIRECTORY, studentDirectory,
                                                                               "gradeHelper.csv")),
                                               self.studentDirectories), None)
+            if not nextUngradedStudent:
+                createMessagePopUpBox("Done grading all students. You can compile the report now")
+                return
 
             self.currentStudentGradedIndex = binarySearch(self.studentDirectories, nextUngradedStudent)
             self.loadStudentInfo(nextUngradedStudent)
@@ -151,11 +160,6 @@ class Window(QtWidgets.QMainWindow):
 
     # load all info into form for current student
     def loadStudentInfo(self, studentUsername):
-        def findStudentID(text):
-            head = text.rstrip('0123456789')
-            tail = text[len(head):]
-            return tail
-
         if not studentUsername:
             createMessagePopUpBox("Could not find next student")
 
@@ -166,7 +170,9 @@ class Window(QtWidgets.QMainWindow):
         for tokenType, token, start, end, line in tokenize.tokenize(file.readline):
             if tokenType == tokenize.COMMENT and "id" in token.lower() and "student" in token.lower():
                 commentWithStudentID = token
-
+        if not commentWithStudentID:
+            createMessagePopUpBox(f"Check {studentUsername}'s folder. Could not find student ID")
+            return
         studentID = findStudentID(commentWithStudentID)
 
         self.usernameLayoutTextSetBox.setText(studentUsername)
