@@ -1,7 +1,7 @@
+import csv
 import os
 import shutil
 import tokenize
-import csv
 from bisect import bisect_left
 
 import pandas as pd
@@ -116,7 +116,7 @@ class Window(QtWidgets.QMainWindow):
         gradeHelperCSVPath = os.path.join(constants.LAB_DIRECTORY,
                                           self.studentDirectories[self.currentStudentGradedIndex], "gradeHelper.csv")
 
-        df.to_csv(gradeHelperCSVPath, columns=self.columnNames)
+        df.to_csv(gradeHelperCSVPath, columns=columnNames)
 
         self.currentStudentGradesSubmitted = True
 
@@ -182,15 +182,15 @@ class Window(QtWidgets.QMainWindow):
 
     # function to clear grades in the textboxes
     def clearGrades(self):
-        print("CLEAR GRADES")
+        self.gradeLayoutTextSetBox.setText("0")
 
     # function will run through all directories in self.studentDirectories load the csvs and output a final csv in the eclass format
     def compileReport(self):
         classGrades = []
         compiledReportPath = "FinalGrades.csv"
-        for i,x in enumerate(self.studentDirectories):
+        for i, x in enumerate(self.studentDirectories):
             perStudentCSVPath = os.path.join(constants.LAB_DIRECTORY,
-                                              self.studentDirectories[i], "gradeHelper.csv")
+                                             self.studentDirectories[i], "gradeHelper.csv")
             if self.gradedStudentDirectories[i]:
                 try:
                     with open(perStudentCSVPath) as f:
@@ -198,7 +198,7 @@ class Window(QtWidgets.QMainWindow):
                         studentInfo = {}
                         studentInfo['studentId'] = reader[0]
                         grades = reader[1:]
-                        for ix,y in enumerate(grades):
+                        for ix, y in enumerate(grades):
                             studentInfo[f'grade{ix}'] = reader[ix + 1]
                         classGrades.append(studentInfo)
                 except Exception as e:
@@ -206,6 +206,7 @@ class Window(QtWidgets.QMainWindow):
 
         df = pd.DataFrame(classGrades).set_index('studentId')
         df.to_csv(compiledReportPath)
+
 
 app = QtWidgets.QApplication([])
 w = Window()
