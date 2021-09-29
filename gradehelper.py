@@ -74,19 +74,13 @@ class Window(QtWidgets.QMainWindow):
         self.idLayout.addWidget(self.idLayoutText)
         self.idLayout.addWidget(self.idLayoutTextSetBox)
 
-        self.gradeLayouts = []
-        self.gradeLayoutSetBoxes = []
-        for i in range(constants.NUM_GRADES):
-            gradeLayoutText = QLabel("Grade {}: ".format(i + 1), self)
-            gradeLayoutTextSetBox = QLineEdit(self)
-            gradeLayoutTextSetBox.setText("0")
-            self.gradeLayoutSetBoxes.append(gradeLayoutTextSetBox)
+        self.gradeLayoutText = QLabel("Grade: ", self)
+        self.gradeLayoutTextSetBox = QLineEdit(self)
+        self.gradeLayoutTextSetBox.setText("0")
 
-            gradeLayout = QHBoxLayout(self)
-            gradeLayout.addWidget(gradeLayoutText)
-            gradeLayout.addWidget(gradeLayoutTextSetBox)
-
-            self.gradeLayouts.append(gradeLayout)
+        self.gradeLayout = QHBoxLayout(self)
+        self.gradeLayout.addWidget(self.gradeLayoutText)
+        self.gradeLayout.addWidget(self.gradeLayoutTextSetBox)
 
         self.submitButton = QPushButton('Submit Grades', self)
         self.nextButton = QPushButton('Next Student', self)
@@ -95,9 +89,8 @@ class Window(QtWidgets.QMainWindow):
         self.verticalLayout = QVBoxLayout(self)
         self.verticalLayout.addLayout(self.usernameLayout)
         self.verticalLayout.addLayout(self.idLayout)
+        self.verticalLayout.addLayout(self.gradeLayout)
 
-        for layout in self.gradeLayouts:
-            self.verticalLayout.addLayout(layout)
         self.verticalLayout.addWidget(self.submitButton)
         self.verticalLayout.addWidget(self.nextButton)
         self.verticalLayout.addWidget(self.compileButton)
@@ -115,14 +108,9 @@ class Window(QtWidgets.QMainWindow):
     # this function should write out grades to each folder in a csv file per student
     def submitGrades(self):
         # used to specify Order of output
-        self.columnNames = ["Student ID"]
 
-        # build up a pandas dataframe (NEEDS WORK)
-        data = {'Student ID': [self.idLayoutTextSetBox.text()]}
-        for i, layout in enumerate(self.gradeLayoutSetBoxes):
-            columnName = "Grade {}".format(i + 1)
-            data[columnName] = [self.gradeLayoutSetBoxes[i].text()]
-            self.columnNames.append(columnName)
+        columnNames = ["Student ID", "Grade"]
+        data = {'Student ID': [self.idLayoutTextSetBox.text()], "Grade": [self.gradeLayoutTextSetBox.text()]}
 
         df = pd.DataFrame(data)
         gradeHelperCSVPath = os.path.join(constants.LAB_DIRECTORY,
