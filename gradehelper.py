@@ -208,7 +208,7 @@ class Window(QtWidgets.QMainWindow):
                             studentInfo[f'grade{ix}'] = reader[ix + 1]
                         classGrades.append(studentInfo)
                 except Exception as e:
-                    createMessagePopUpBox(e)
+                    createMessagePopUpBox(str(e))
 
         df = pd.DataFrame(classGrades).set_index('studentId')
         df.to_csv(compiledReportPath)
