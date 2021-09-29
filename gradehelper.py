@@ -1,6 +1,7 @@
 import os
 import shutil
 import tokenize
+import csv
 from bisect import bisect_left
 
 import pandas as pd
@@ -28,6 +29,12 @@ def deleteDirectoryContent(folder):
                 shutil.rmtree(file_path)
         except Exception as e:
             createMessagePopUpBox(f"Failed to delete {file_path}. Reason:{e}. Check student directory")
+
+
+def findStudentID(text):
+    head = text.rstrip('0123456789')
+    tail = text[len(head):]
+    return tail
 
 
 def createMessagePopUpBox(text):
@@ -101,13 +108,15 @@ class Window(QtWidgets.QMainWindow):
     # this function should write out grades to each folder in a csv file per student
     def submitGrades(self):
         # used to specify Order of output
+
         columnNames = ["Student ID", "Grade"]
         data = {'Student ID': [self.idLayoutTextSetBox.text()], "Grade": [self.gradeLayoutTextSetBox.text()]}
+
         df = pd.DataFrame(data)
         gradeHelperCSVPath = os.path.join(constants.LAB_DIRECTORY,
                                           self.studentDirectories[self.currentStudentGradedIndex], "gradeHelper.csv")
 
-        df.to_csv(gradeHelperCSVPath, columns=columnNames)
+        df.to_csv(gradeHelperCSVPath, columns=self.columnNames)
 
         self.currentStudentGradesSubmitted = True
 
@@ -126,8 +135,13 @@ class Window(QtWidgets.QMainWindow):
                                               not os.path.exists(os.path.join(constants.LAB_DIRECTORY, studentDirectory,
                                                                               "gradeHelper.csv")),
                                               self.studentDirectories), None)
+            if not nextUngradedStudent:
+                createMessagePopUpBox("Done grading all students. You can compile the report now")
+                return
 
             self.currentStudentGradedIndex = binarySearch(self.studentDirectories, nextUngradedStudent)
+            # Done so list of bools is updated on startup
+            self.gradedStudentDirectories[0:self.currentStudentGradedIndex] = [True] * self.currentStudentGradedIndex
             self.loadStudentInfo(nextUngradedStudent)
             self.loadDirectoryWithStudentFiles(nextUngradedStudent)
             self.clearGrades()
@@ -137,11 +151,6 @@ class Window(QtWidgets.QMainWindow):
 
     # load all info into form for current student
     def loadStudentInfo(self, studentUsername):
-        def findStudentID(text):
-            head = text.rstrip('0123456789')
-            tail = text[len(head):]
-            return tail
-
         if not studentUsername:
             createMessagePopUpBox("Could not find next student")
 
@@ -152,7 +161,9 @@ class Window(QtWidgets.QMainWindow):
         for tokenType, token, start, end, line in tokenize.tokenize(file.readline):
             if tokenType == tokenize.COMMENT and "id" in token.lower() and "student" in token.lower():
                 commentWithStudentID = token
-
+        if not commentWithStudentID:
+            createMessagePopUpBox(f"Check {studentUsername}'s folder. Could not find student ID")
+            return
         studentID = findStudentID(commentWithStudentID)
 
         self.usernameLayoutTextSetBox.setText(studentUsername)
@@ -175,8 +186,26 @@ class Window(QtWidgets.QMainWindow):
 
     # function will run through all directories in self.studentDirectories load the csvs and output a final csv in the eclass format
     def compileReport(self):
-        print("FUNCTION WILL DO STUFF SOON")
+        classGrades = []
+        compiledReportPath = "FinalGrades.csv"
+        for i,x in enumerate(self.studentDirectories):
+            perStudentCSVPath = os.path.join(constants.LAB_DIRECTORY,
+                                              self.studentDirectories[i], "gradeHelper.csv")
+            if self.gradedStudentDirectories[i]:
+                try:
+                    with open(perStudentCSVPath) as f:
+                        reader = list(csv.reader(f, delimiter=','))[1:][0][1:]
+                        studentInfo = {}
+                        studentInfo['studentId'] = reader[0]
+                        grades = reader[1:]
+                        for ix,y in enumerate(grades):
+                            studentInfo[f'grade{ix}'] = reader[ix + 1]
+                        classGrades.append(studentInfo)
+                except Exception as e:
+                    createMessagePopUpBox(str(e))
 
+        df = pd.DataFrame(classGrades).set_index('studentId')
+        df.to_csv(compiledReportPath)
 
 app = QtWidgets.QApplication([])
 w = Window()
