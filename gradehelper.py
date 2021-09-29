@@ -10,9 +10,6 @@ from PyQt5.QtWidgets import QLabel, QLineEdit, QHBoxLayout, QWidget, QVBoxLayout
 
 import constants
 
-for file in sorted(os.listdir(constants.LAB_DIRECTORY)):
-    print(file)
-
 # create working folder to copy files that I'm viewing to
 if not os.path.exists(constants.WORKING_DIRECTORY):
     os.makedirs(constants.WORKING_DIRECTORY, exist_ok=True)
