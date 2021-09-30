@@ -10,9 +10,6 @@ from PyQt5.QtWidgets import QLabel, QLineEdit, QHBoxLayout, QWidget, QVBoxLayout
 
 import constants
 
-for file in sorted(os.listdir(constants.LAB_DIRECTORY)):
-    print(file)
-
 # create working folder to copy files that I'm viewing to
 if not os.path.exists(constants.WORKING_DIRECTORY):
     os.makedirs(constants.WORKING_DIRECTORY, exist_ok=True)
@@ -51,8 +48,8 @@ class Window(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.studentDirectories = sorted(os.listdir(constants.LAB_DIRECTORY))
-        self.gradedStudentDirectories = [False] * len(
-            self.studentDirectories)  # create a list of equal length as student directories that tracks if we have viewed it
+        # create a list of equal length as student directories that tracks if we have viewed it
+        self.gradedStudentDirectories = [False] * len(self.studentDirectories)
         self.currentStudentGradedIndex = 0
         self.currentStudentDirectory = ""
         self.currentStudentGradesSubmitted = False
@@ -60,7 +57,7 @@ class Window(QtWidgets.QMainWindow):
 
         self.usernameLayoutText = QLabel("Student Username: ", self)
         self.usernameLayoutTextSetBox = QLineEdit(self)
-        self.usernameLayoutTextSetBox.setText("0")
+        self.usernameLayoutTextSetBox.setText("")
 
         self.usernameLayout = QHBoxLayout(self)
         self.usernameLayout.addWidget(self.usernameLayoutText)
@@ -73,6 +70,14 @@ class Window(QtWidgets.QMainWindow):
         self.idLayout = QHBoxLayout(self)
         self.idLayout.addWidget(self.idLayoutText)
         self.idLayout.addWidget(self.idLayoutTextSetBox)
+
+        self.feedbackLayoutText = QLabel("Feedback: ", self)
+        self.feedbackLayoutTextSetBox = QLineEdit(self)
+        self.feedbackLayoutTextSetBox.setText("")
+
+        self.feedbackLayout = QHBoxLayout(self)
+        self.feedbackLayout.addWidget(self.feedbackLayoutText)
+        self.feedbackLayout.addWidget(self.feedbackLayoutTextSetBox)
 
         self.gradeLayoutText = QLabel("Grade: ", self)
         self.gradeLayoutTextSetBox = QLineEdit(self)
@@ -89,6 +94,7 @@ class Window(QtWidgets.QMainWindow):
         self.verticalLayout = QVBoxLayout(self)
         self.verticalLayout.addLayout(self.usernameLayout)
         self.verticalLayout.addLayout(self.idLayout)
+        self.verticalLayout.addLayout(self.feedbackLayout)
         self.verticalLayout.addLayout(self.gradeLayout)
 
         self.verticalLayout.addWidget(self.submitButton)
@@ -109,8 +115,9 @@ class Window(QtWidgets.QMainWindow):
     def submitGrades(self):
         # used to specify Order of output
 
-        columnNames = ["Student ID", "Grade"]
-        data = {'Student ID': [self.idLayoutTextSetBox.text()], "Grade": [self.gradeLayoutTextSetBox.text()]}
+        columnNames = ["Student ID", "Grade", "Feedback"]
+        data = {'Student ID': [self.idLayoutTextSetBox.text()], "Grade": [self.gradeLayoutTextSetBox.text()],
+                "Feedback": [self.feedbackLayoutTextSetBox.text()]}
 
         df = pd.DataFrame(data)
         gradeHelperCSVPath = os.path.join(constants.LAB_DIRECTORY,
@@ -136,6 +143,7 @@ class Window(QtWidgets.QMainWindow):
                                                                               "gradeHelper.csv")),
                                               self.studentDirectories), None)
             if not nextUngradedStudent:
+                self.gradedStudentDirectories[0:len(self.studentDirectories)] = [True] * len(self.studentDirectories)
                 createMessagePopUpBox("Done grading all students. You can compile the report now")
                 return
 
@@ -195,11 +203,7 @@ class Window(QtWidgets.QMainWindow):
                 try:
                     with open(perStudentCSVPath) as f:
                         reader = list(csv.reader(f, delimiter=','))[1:][0][1:]
-                        studentInfo = {}
-                        studentInfo['studentId'] = reader[0]
-                        grades = reader[1:]
-                        for ix, y in enumerate(grades):
-                            studentInfo[f'grade{ix}'] = reader[ix + 1]
+                        studentInfo = {'studentId': reader[0], "grade": reader[1], "feedback": reader[2]}
                         classGrades.append(studentInfo)
                 except Exception as e:
                     createMessagePopUpBox(str(e))
