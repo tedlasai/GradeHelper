@@ -6,6 +6,7 @@ from bisect import bisect_left
 
 import pandas as pd
 from PyQt5 import QtWidgets
+from PyQt5.QtGui import QIntValidator
 from PyQt5.QtWidgets import QLabel, QLineEdit, QHBoxLayout, QWidget, QVBoxLayout, QPushButton, QMessageBox
 
 import constants
@@ -79,8 +80,9 @@ class Window(QtWidgets.QMainWindow):
         self.feedbackLayout.addWidget(self.feedbackLayoutText)
         self.feedbackLayout.addWidget(self.feedbackLayoutTextSetBox)
 
-        self.gradeLayoutText = QLabel("Grade: ", self)
+        self.gradeLayoutText = QLabel("Grade (0 - 10): ", self)
         self.gradeLayoutTextSetBox = QLineEdit(self)
+        self.gradeLayoutTextSetBox.setValidator(QIntValidator())
         self.gradeLayoutTextSetBox.setText("0")
 
         self.gradeLayout = QHBoxLayout(self)
@@ -114,9 +116,10 @@ class Window(QtWidgets.QMainWindow):
     # this function should write out grades to each folder in a csv file per student
     def submitGrades(self):
         # used to specify Order of output
-
+        scaleFactor = 10
         columnNames = ["Student ID", "Grade", "Feedback"]
-        data = {'Student ID': [self.idLayoutTextSetBox.text()], "Grade": [self.gradeLayoutTextSetBox.text()],
+        data = {'Student ID': [self.idLayoutTextSetBox.text()], "Grade": [
+            int(self.gradeLayoutTextSetBox.text()) * scaleFactor],
                 "Feedback": [self.feedbackLayoutTextSetBox.text()]}
 
         df = pd.DataFrame(data)
