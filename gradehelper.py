@@ -90,18 +90,18 @@ class Window(QtWidgets.QMainWindow):
         self.verticalLayout.addWidget(self.nextButton)
         self.verticalLayout.addWidget(self.compileButton)
 
-        self.submitButton.clicked.connect(self.submitGrades)
-        self.nextButton.clicked.connect(self.loadNextStudent)
-        self.compileButton.clicked.connect(self.compileReport)
+        self.submitButton.clicked.connect(self.submit_grades)
+        self.nextButton.clicked.connect(self.load_next_student)
+        self.compileButton.clicked.connect(self.compile_report)
 
         widget = QWidget()
         self.setCentralWidget(widget)
         widget.setLayout(self.verticalLayout)
 
-        self.loadNextStudent()
+        self.load_next_student()
 
     # this function should write out grades to each folder in a csv file per student
-    def submitGrades(self):
+    def submit_grades(self):
         scale_factor = 10
         student_grade_path = os.path.join(constants.LAB_DIRECTORY,
                                           self.studentDirectories[self.currentStudentGradedIndex],
@@ -124,11 +124,11 @@ class Window(QtWidgets.QMainWindow):
             create_message_pop_up_box(e)
 
         self.currentStudentGradesSubmitted = True
-        self.clearFields()
+        self.clear_fields()
 
     # Gets information for next student in the list that doesn't have a CSV already stored in the folder and replaces
     # working directory with next student's files
-    def loadNextStudent(self):
+    def load_next_student(self):
         def binary_search(students, student_name):
             i = bisect_left(students, student_name)
             if i != len(students) and students[i] == student_name:
@@ -153,13 +153,13 @@ class Window(QtWidgets.QMainWindow):
         self.programStarted = False
 
     # function to clear fields in the textboxes
-    def clearFields(self):
+    def clear_fields(self):
         self.feedbackLayoutTextSetBox.setText("")
         self.gradeLayoutTextSetBox.setText("0")
 
     # function will run through all directories in self.studentDirectories load the csvs and output a final csv in
     # the eclass format
-    def compileReport(self):
+    def compile_report(self):
         response = compile_grade_report(self.studentDirectories, constants.LAB_DIRECTORY,
                                         constants.FINAL_GRADE_REPORT_PATH)
         if response["error"]:
