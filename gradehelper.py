@@ -28,75 +28,75 @@ class Window(QtWidgets.QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.studentDirectories = sorted(os.listdir(constants.LAB_DIRECTORY))
-        self.currentStudentGradedIndex = 0
+        self._student_directories = sorted(os.listdir(constants.LAB_DIRECTORY))
+        self._current_student_graded_index = 0
 
-        self.currentStudentGradesSubmitted = False
-        self.programStarted = True  # just a flag when we start program
+        self._current_student_grades_submitted = False
+        self._program_started = True  # just a flag when we start program
 
-        self.studentNameLayoutText = QLabel("Student Name: ")
-        self.studentNameLayoutTextSetBox = QLineEdit()
-        self.studentNameLayoutTextSetBox.setText("")
+        self._student_name_layout_text = QLabel("Student Name: ")
+        self._student_name_layout_text_set_box = QLineEdit()
+        self._student_name_layout_text_set_box.setText("")
 
-        self.studentNameLayout = QHBoxLayout()
-        self.studentNameLayout.addWidget(self.studentNameLayoutText)
-        self.studentNameLayout.addWidget(self.studentNameLayoutTextSetBox)
+        self._student_name_layout = QHBoxLayout()
+        self._student_name_layout.addWidget(self._student_name_layout_text)
+        self._student_name_layout.addWidget(self._student_name_layout_text_set_box)
 
-        self.usernameLayoutText = QLabel("Student Username: ")
-        self.usernameLayoutTextSetBox = QLineEdit()
-        self.usernameLayoutTextSetBox.setText("")
+        self._username_layout_text = QLabel("Student Username: ")
+        self._username_layout_text_set_box = QLineEdit()
+        self._username_layout_text_set_box.setText("")
 
-        self.usernameLayout = QHBoxLayout()
-        self.usernameLayout.addWidget(self.usernameLayoutText)
-        self.usernameLayout.addWidget(self.usernameLayoutTextSetBox)
+        self._username_layout = QHBoxLayout()
+        self._username_layout.addWidget(self._username_layout_text)
+        self._username_layout.addWidget(self._username_layout_text_set_box)
 
-        self.idLayoutText = QLabel("Student ID: ")
-        self.idLayoutTextSetBox = QLineEdit()
-        self.idLayoutTextSetBox.setText("0")
+        self._id_layout_text = QLabel("Student ID: ")
+        self._id_layout_text_set_box = QLineEdit()
+        self._id_layout_text_set_box.setText("0")
 
-        self.idLayout = QHBoxLayout()
-        self.idLayout.addWidget(self.idLayoutText)
-        self.idLayout.addWidget(self.idLayoutTextSetBox)
+        self._id_layout = QHBoxLayout()
+        self._id_layout.addWidget(self._id_layout_text)
+        self._id_layout.addWidget(self._id_layout_text_set_box)
 
-        self.feedbackLayoutText = QLabel("Feedback: ")
-        self.feedbackLayoutTextSetBox = QLineEdit()
-        self.feedbackLayoutTextSetBox.setText("")
+        self._feedback_layout_text = QLabel("Feedback: ")
+        self._feedback_layout_text_set_box = QLineEdit()
+        self._feedback_layout_text_set_box.setText("")
 
-        self.feedbackLayout = QHBoxLayout()
-        self.feedbackLayout.addWidget(self.feedbackLayoutText)
-        self.feedbackLayout.addWidget(self.feedbackLayoutTextSetBox)
+        self._feedback_layout = QHBoxLayout()
+        self._feedback_layout.addWidget(self._feedback_layout_text)
+        self._feedback_layout.addWidget(self._feedback_layout_text_set_box)
 
-        self.gradeLayoutText = QLabel("Grade (0 - 10): ")
-        self.gradeLayoutTextSetBox = QLineEdit(self)
-        self.gradeLayoutTextSetBox.setValidator(QIntValidator())
-        self.gradeLayoutTextSetBox.setText("0")
+        self._grade_layout_text = QLabel("Grade (0 - 10): ")
+        self._grade_layout_text_set_box = QLineEdit(self)
+        self._grade_layout_text_set_box.setValidator(QIntValidator())
+        self._grade_layout_text_set_box.setText("0")
 
-        self.gradeLayout = QHBoxLayout()
-        self.gradeLayout.addWidget(self.gradeLayoutText)
-        self.gradeLayout.addWidget(self.gradeLayoutTextSetBox)
+        self._grade_layout = QHBoxLayout()
+        self._grade_layout.addWidget(self._grade_layout_text)
+        self._grade_layout.addWidget(self._grade_layout_text_set_box)
 
-        self.submitButton = QPushButton('Submit Grades')
-        self.nextButton = QPushButton('Next Student')
-        self.compileButton = QPushButton('Compile Report')
+        submitButton = QPushButton('Submit Grades')
+        nextButton = QPushButton('Next Student')
+        compileButton = QPushButton('Compile Report')
 
-        self.verticalLayout = QVBoxLayout()
-        self.verticalLayout.addLayout(self.studentNameLayout)
-        self.verticalLayout.addLayout(self.usernameLayout)
-        self.verticalLayout.addLayout(self.idLayout)
-        self.verticalLayout.addLayout(self.feedbackLayout)
-        self.verticalLayout.addLayout(self.gradeLayout)
+        verticalLayout = QVBoxLayout()
+        verticalLayout.addLayout(self._student_name_layout)
+        verticalLayout.addLayout(self._username_layout)
+        verticalLayout.addLayout(self._id_layout)
+        verticalLayout.addLayout(self._feedback_layout)
+        verticalLayout.addLayout(self._grade_layout)
 
-        self.verticalLayout.addWidget(self.submitButton)
-        self.verticalLayout.addWidget(self.nextButton)
-        self.verticalLayout.addWidget(self.compileButton)
+        verticalLayout.addWidget(submitButton)
+        verticalLayout.addWidget(nextButton)
+        verticalLayout.addWidget(compileButton)
 
-        self.submitButton.clicked.connect(self.submit_grades)
-        self.nextButton.clicked.connect(self.load_next_student)
-        self.compileButton.clicked.connect(self.compile_report)
+        submitButton.clicked.connect(self.submit_grades)
+        nextButton.clicked.connect(self.load_next_student)
+        compileButton.clicked.connect(self.compile_report)
 
         widget = QWidget()
         self.setCentralWidget(widget)
-        widget.setLayout(self.verticalLayout)
+        widget.setLayout(verticalLayout)
 
         self.load_next_student()
 
@@ -104,26 +104,26 @@ class Window(QtWidgets.QMainWindow):
     def submit_grades(self):
         scale_factor = 10
         student_grade_path = os.path.join(constants.LAB_DIRECTORY,
-                                          self.studentDirectories[self.currentStudentGradedIndex],
+                                          self._student_directories[self._current_student_graded_index],
                                           constants.CSV_FILE_NAME)
         columns = ["First name", "Surname", "ID number", "Grade", "Feedback"]
         first_name, last_name = "", ""
-        if self.studentNameLayoutTextSetBox.text():
-            first_name, last_name = self.studentNameLayoutTextSetBox.text().split(" ", 1)
+        if self._student_name_layout_text_set_box.text():
+            first_name, last_name = self._student_name_layout_text_set_box.text().split(" ", 1)
 
         row_values = [
             first_name,
             last_name,
-            self.idLayoutTextSetBox.text(),
-            int(self.gradeLayoutTextSetBox.text()) * scale_factor,
-            self.feedbackLayoutTextSetBox.text()
+            self._id_layout_text_set_box.text(),
+            int(self._grade_layout_text_set_box.text()) * scale_factor,
+            self._feedback_layout_text_set_box.text()
         ]
         try:
             submit_grades(student_grade_path, columns, row_values)
         except ValueError as e:
             create_message_pop_up_box(e)
 
-        self.currentStudentGradesSubmitted = True
+        self._current_student_grades_submitted = True
         self.clear_fields()
 
     # Gets information for next student in the list that doesn't have a CSV already stored in the folder and replaces
@@ -135,14 +135,14 @@ class Window(QtWidgets.QMainWindow):
                 return i
             else:
                 return -1
-        if self.currentStudentGradesSubmitted or self.programStarted:
+        if self._current_student_grades_submitted or self._program_started:
             try:
-                student = load_next_student(self.studentDirectories)
+                student = load_next_student(self._student_directories)
                 if not student["error_message"]:
-                    self.currentStudentGradedIndex = binary_search(self.studentDirectories, student["username"])
-                    self.usernameLayoutTextSetBox.setText(student["username"])
-                    self.studentNameLayoutTextSetBox.setText(student["name"])
-                    self.idLayoutTextSetBox.setText(student["id"])
+                    self._current_student_graded_index = binary_search(self._student_directories, student["username"])
+                    self._username_layout_text_set_box.setText(student["username"])
+                    self._student_name_layout_text_set_box.setText(student["name"])
+                    self._id_layout_text_set_box.setText(student["id"])
                 else:
                     create_message_pop_up_box("\n".join(student["error_message"]))
             except ValueError as e:
@@ -150,17 +150,17 @@ class Window(QtWidgets.QMainWindow):
 
         else:
             create_message_pop_up_box("Grades have not been submitted yet")
-        self.programStarted = False
+        self._program_started = False
 
     # function to clear fields in the textboxes
     def clear_fields(self):
-        self.feedbackLayoutTextSetBox.setText("")
-        self.gradeLayoutTextSetBox.setText("0")
+        self._feedback_layout_text_set_box.setText("")
+        self._grade_layout_text_set_box.setText("0")
 
     # function will run through all directories in self.studentDirectories load the csvs and output a final csv in
     # the eclass format
     def compile_report(self):
-        response = compile_grade_report(self.studentDirectories, constants.LAB_DIRECTORY,
+        response = compile_grade_report(self._student_directories, constants.LAB_DIRECTORY,
                                         constants.FINAL_GRADE_REPORT_PATH)
         if response["error"]:
             create_message_pop_up_box(response["error"])

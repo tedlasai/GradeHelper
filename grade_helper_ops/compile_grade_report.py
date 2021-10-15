@@ -27,7 +27,6 @@ def compile_grade_report(student_directories, src_path, final_grade_report_path)
                     class_grades.append(studentInfo)
             except Exception as e:
                 error_msg = str(e)
-    print(class_grades)
     if grade_report_files != len(student_directories):
         error_msg = "Discrepancy between amount of students graded and amount of students in folder." \
                     " There exists a possibility that a student might not have been graded"
