@@ -11,8 +11,9 @@ from PyQt5.QtGui import QIntValidator
 from PyQt5.QtWidgets import QLabel, QLineEdit, QHBoxLayout, QWidget, QVBoxLayout, QPushButton, QMessageBox
 
 import constants
-
 # create working folder to copy files that I'm viewing to
+from submit_grades import submit_grades
+
 if not os.path.exists(constants.WORKING_DIRECTORY):
     os.makedirs(constants.WORKING_DIRECTORY, exist_ok=True)
 
@@ -129,28 +130,26 @@ class Window(QtWidgets.QMainWindow):
 
     # this function should write out grades to each folder in a csv file per student
     def submitGrades(self):
-        # used to specify Order of output
-        scaleFactor = 10
-        columnNames = ["First name", "Surname", "ID number", "Grade", "Feedback"]
-        firstName, lastName = "", ""
+        scale_factor = 10
+        student_grade_path = os.path.join(constants.LAB_DIRECTORY,
+                                          self.studentDirectories[self.currentStudentGradedIndex],
+                                          constants.CSV_FILE_NAME)
+        columns = ["First name", "Surname", "ID number", "Grade", "Feedback"]
+        first_name, last_name = "", ""
         if self.studentNameLayoutTextSetBox.text():
-            firstName, lastName = self.studentNameLayoutTextSetBox.text().split(" ", 1)
+            first_name, last_name = self.studentNameLayoutTextSetBox.text().split(" ", 1)
 
-        data = {
-            "First name": firstName,
-            "Surname": lastName,
-            "ID number": self.idLayoutTextSetBox.text(),
-            "Grade": [
-                int(self.gradeLayoutTextSetBox.text()) * scaleFactor
-            ],
-            "Feedback": self.feedbackLayoutTextSetBox.text()
-        }
-
-        df = pd.DataFrame(data)
-        gradeHelperCSVPath = os.path.join(constants.LAB_DIRECTORY,
-                                          self.studentDirectories[self.currentStudentGradedIndex], "gradeHelper.csv")
-
-        df.to_csv(gradeHelperCSVPath, columns=columnNames)
+        row_values = [
+            first_name,
+            last_name,
+            self.idLayoutTextSetBox.text(),
+            int(self.gradeLayoutTextSetBox.text()) * scale_factor,
+            self.feedbackLayoutTextSetBox.text()
+        ]
+        try:
+            submit_grades(student_grade_path, columns, row_values)
+        except ValueError as e:
+            createMessagePopUpBox(e)
 
         self.currentStudentGradesSubmitted = True
 

@@ -4,3 +4,4 @@
 /lab*
 .idea/
 __pycache__/
+/tests/test_lab/
