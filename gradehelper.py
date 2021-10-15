@@ -166,9 +166,12 @@ class Window(QtWidgets.QMainWindow):
             createMessagePopUpBox("Could not find next student")
             return
 
+        self.usernameLayoutTextSetBox.setText(studentUsername)
+
         if not os.path.exists(os.path.join(constants.LAB_DIRECTORY, studentUsername,
                                            constants.FILE_NAME)):
             createMessagePopUpBox(f"Could not find student {studentUsername}'s files")
+            self.idLayoutTextSetBox.setText("0")
             return
 
         filePath = os.path.join(constants.LAB_DIRECTORY, studentUsername,
@@ -183,7 +186,6 @@ class Window(QtWidgets.QMainWindow):
             return
         studentID = findStudentID(commentWithStudentID)
 
-        self.usernameLayoutTextSetBox.setText(studentUsername)
         self.idLayoutTextSetBox.setText(studentID)
 
     def loadDirectoryWithStudentFiles(self, studentUsername):
