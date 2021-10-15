@@ -2,3 +2,5 @@ LAB_DIRECTORY = "lab4"
 NUM_GRADES = 3
 WORKING_DIRECTORY = "WD"
 FILE_NAME = "lab4.py"
+CSV_FILE_NAME = "gradeHelper.csv"
+FINAL_GRADE_REPORT_PATH = "FinalGrades.csv"
