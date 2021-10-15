@@ -3,7 +3,7 @@ import unittest
 
 import pandas as pd
 
-from submit_grades import submit_grades
+from grade_helper_ops.submit_grades import submit_grades
 
 
 class TestSubmitGrades(unittest.TestCase):
