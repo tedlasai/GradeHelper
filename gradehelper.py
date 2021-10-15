@@ -56,44 +56,44 @@ class Window(QtWidgets.QMainWindow):
         self.currentStudentGradesSubmitted = False
         self.programStarted = True  # just a flag when we start program
 
-        self.usernameLayoutText = QLabel("Student Username: ", self)
-        self.usernameLayoutTextSetBox = QLineEdit(self)
+        self.usernameLayoutText = QLabel("Student Username: ")
+        self.usernameLayoutTextSetBox = QLineEdit()
         self.usernameLayoutTextSetBox.setText("")
 
-        self.usernameLayout = QHBoxLayout(self)
+        self.usernameLayout = QHBoxLayout()
         self.usernameLayout.addWidget(self.usernameLayoutText)
         self.usernameLayout.addWidget(self.usernameLayoutTextSetBox)
 
-        self.idLayoutText = QLabel("Student ID: ", self)
-        self.idLayoutTextSetBox = QLineEdit(self)
+        self.idLayoutText = QLabel("Student ID: ")
+        self.idLayoutTextSetBox = QLineEdit()
         self.idLayoutTextSetBox.setText("0")
 
-        self.idLayout = QHBoxLayout(self)
+        self.idLayout = QHBoxLayout()
         self.idLayout.addWidget(self.idLayoutText)
         self.idLayout.addWidget(self.idLayoutTextSetBox)
 
-        self.feedbackLayoutText = QLabel("Feedback: ", self)
-        self.feedbackLayoutTextSetBox = QLineEdit(self)
+        self.feedbackLayoutText = QLabel("Feedback: ")
+        self.feedbackLayoutTextSetBox = QLineEdit()
         self.feedbackLayoutTextSetBox.setText("")
 
-        self.feedbackLayout = QHBoxLayout(self)
+        self.feedbackLayout = QHBoxLayout()
         self.feedbackLayout.addWidget(self.feedbackLayoutText)
         self.feedbackLayout.addWidget(self.feedbackLayoutTextSetBox)
 
-        self.gradeLayoutText = QLabel("Grade (0 - 10): ", self)
+        self.gradeLayoutText = QLabel("Grade (0 - 10): ")
         self.gradeLayoutTextSetBox = QLineEdit(self)
         self.gradeLayoutTextSetBox.setValidator(QIntValidator())
         self.gradeLayoutTextSetBox.setText("0")
 
-        self.gradeLayout = QHBoxLayout(self)
+        self.gradeLayout = QHBoxLayout()
         self.gradeLayout.addWidget(self.gradeLayoutText)
         self.gradeLayout.addWidget(self.gradeLayoutTextSetBox)
 
-        self.submitButton = QPushButton('Submit Grades', self)
-        self.nextButton = QPushButton('Next Student', self)
-        self.compileButton = QPushButton('Compile Report', self)
+        self.submitButton = QPushButton('Submit Grades')
+        self.nextButton = QPushButton('Next Student')
+        self.compileButton = QPushButton('Compile Report')
 
-        self.verticalLayout = QVBoxLayout(self)
+        self.verticalLayout = QVBoxLayout()
         self.verticalLayout.addLayout(self.usernameLayout)
         self.verticalLayout.addLayout(self.idLayout)
         self.verticalLayout.addLayout(self.feedbackLayout)
@@ -164,6 +164,12 @@ class Window(QtWidgets.QMainWindow):
     def loadStudentInfo(self, studentUsername):
         if not studentUsername:
             createMessagePopUpBox("Could not find next student")
+            return
+
+        if not os.path.exists(os.path.join(constants.LAB_DIRECTORY, studentUsername,
+                                           constants.FILE_NAME)):
+            createMessagePopUpBox(f"Could not find student {studentUsername}'s files")
+            return
 
         filePath = os.path.join(constants.LAB_DIRECTORY, studentUsername,
                                 constants.FILE_NAME)
