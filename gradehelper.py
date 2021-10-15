@@ -1,13 +1,12 @@
-import csv
 import os
 from bisect import bisect_left
 
-import pandas as pd
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QIntValidator
 from PyQt5.QtWidgets import QLabel, QLineEdit, QHBoxLayout, QWidget, QVBoxLayout, QPushButton, QMessageBox
 
 import constants
+from grade_helper_ops.compile_grade_report import compile_grade_report
 from grade_helper_ops.load_next_student import load_next_student
 from grade_helper_ops.submit_grades import submit_grades
 
@@ -16,7 +15,7 @@ if not os.path.exists(constants.WORKING_DIRECTORY):
     os.makedirs(constants.WORKING_DIRECTORY, exist_ok=True)
 
 
-def createMessagePopUpBox(text):
+def create_message_pop_up_box(text):
     msg = QMessageBox()
     msg.setWindowTitle("Error")
     msg.setText(text)
@@ -30,10 +29,8 @@ class Window(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.studentDirectories = sorted(os.listdir(constants.LAB_DIRECTORY))
-        # create a list of equal length as student directories that tracks if we have viewed it
-        self.gradedStudentDirectories = [False] * len(self.studentDirectories)
         self.currentStudentGradedIndex = 0
-        self.currentStudentDirectory = ""
+
         self.currentStudentGradesSubmitted = False
         self.programStarted = True  # just a flag when we start program
 
@@ -124,7 +121,7 @@ class Window(QtWidgets.QMainWindow):
         try:
             submit_grades(student_grade_path, columns, row_values)
         except ValueError as e:
-            createMessagePopUpBox(e)
+            create_message_pop_up_box(e)
 
         self.currentStudentGradesSubmitted = True
         self.clearFields()
@@ -138,26 +135,21 @@ class Window(QtWidgets.QMainWindow):
                 return i
             else:
                 return -1
-
         if self.currentStudentGradesSubmitted or self.programStarted:
             try:
                 student = load_next_student(self.studentDirectories)
-                if not student["error"]:
+                if not student["error_message"]:
                     self.currentStudentGradedIndex = binary_search(self.studentDirectories, student["username"])
-                    # Done so list of bools is updated on startup
-                    self.gradedStudentDirectories[0:self.currentStudentGradedIndex] = \
-                        [True] * self.currentStudentGradedIndex
-
                     self.usernameLayoutTextSetBox.setText(student["username"])
                     self.studentNameLayoutTextSetBox.setText(student["name"])
                     self.idLayoutTextSetBox.setText(student["id"])
                 else:
-                    createMessagePopUpBox("\n".join(student["error_message"]))
+                    create_message_pop_up_box("\n".join(student["error_message"]))
             except ValueError as e:
-                createMessagePopUpBox(f"{e}")
+                create_message_pop_up_box(f"{e}")
 
         else:
-            createMessagePopUpBox("Grades have not been submitted yet")
+            create_message_pop_up_box("Grades have not been submitted yet")
         self.programStarted = False
 
     # function to clear fields in the textboxes
@@ -165,29 +157,13 @@ class Window(QtWidgets.QMainWindow):
         self.feedbackLayoutTextSetBox.setText("")
         self.gradeLayoutTextSetBox.setText("0")
 
-    # function will run through all directories in self.studentDirectories load the csvs and output a final csv in the eclass format
+    # function will run through all directories in self.studentDirectories load the csvs and output a final csv in
+    # the eclass format
     def compileReport(self):
-        classGrades = []
-        compiledReportPath = "FinalGrades.csv"
-        for i, x in enumerate(self.studentDirectories):
-            perStudentCSVPath = os.path.join(constants.LAB_DIRECTORY,
-                                             self.studentDirectories[i], "gradeHelper.csv")
-            if self.gradedStudentDirectories[i]:
-                try:
-                    with open(perStudentCSVPath) as f:
-                        reader = list(csv.reader(f, delimiter=','))[1:][0][1:]
-                        studentInfo = {
-                            "First name": reader[0],
-                            "Surname": reader[1],
-                            "ID number": reader[2],
-                            "Grade": reader[3],
-                            "Feedback": reader[4]
-                        }
-                        classGrades.append(studentInfo)
-                except Exception as e:
-                    createMessagePopUpBox(str(e))
-        df = pd.DataFrame(classGrades).set_index("First name")
-        df.to_csv(compiledReportPath)
+        response = compile_grade_report(self.studentDirectories, constants.LAB_DIRECTORY,
+                                        constants.FINAL_GRADE_REPORT_PATH)
+        if response["error"]:
+            create_message_pop_up_box(response["error"])
 
 
 app = QtWidgets.QApplication([])

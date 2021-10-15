@@ -17,18 +17,17 @@ def load_next_student(student_directories: list):
     error_msg = []
 
     student = load_student_info(next_ungraded_student)
-    if student["error"]:
+    if student["error_message"]:
         error_msg.append(student['error_message'])
 
     res = load_working_directory_with_student_files(next_ungraded_student)
-    if res["error"]:
+    if res["error_message"]:
         error_msg.append(res['error_message'])
 
     return {
         "username": next_ungraded_student,
         "name": student["name"],
         "id": student["id"],
-        "error": error_msg,
         "error_message": error_msg
     }
 
@@ -76,7 +75,6 @@ def load_student_info(student_username):
     return {
         "name": student_name,
         "id": student_id,
-        "error": error_msg,
         "error_message": error_msg
     }
 
@@ -102,11 +100,11 @@ def load_working_directory_with_student_files(student_username):
         student_directory = os.path.join(constants.LAB_DIRECTORY, student_username)
         copy_student_files_to_directory(student_directory, constants.WORKING_DIRECTORY)
     except shutil.Error as e:
-        return {"error": True,
-                "error_message": f"Check the student directory; Could not load student's directory into working "
-                                 f"directory: {constants.WORKING_DIRECTORY}; Reason: {e}"}
+        return {
+            "error_message": f"Check the student directory; Could not load student's directory into working "
+                             f"directory: {constants.WORKING_DIRECTORY}; Reason: {e}"}
     return {
-        "error": False
+        "error_message": ''
     }
 
 
@@ -124,5 +122,6 @@ def delete_directory_content(folder):
             elif os.path.isdir(file_path):
                 shutil.rmtree(file_path)
         except Exception as e:
-            return {"error": True,
-                    "error_message": f"Check the student directory; Could not delete {folder}'s directory; Reason: {e}"}
+            return {
+                "error_message": f"Check the student directory; Could not delete {folder}'s directory; Reason: {e}"
+            }

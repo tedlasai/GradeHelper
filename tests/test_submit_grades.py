@@ -1,4 +1,5 @@
 import os
+import shutil
 import unittest
 
 import pandas as pd
@@ -22,6 +23,8 @@ class TestSubmitGrades(unittest.TestCase):
             self.assertEqual(data_frame.columns[column], column_names[column - 1])
         for row, col in zip(row_values, column_names):
             self.assertEqual(str(data_frame.iloc[0][col]), row)
+
+        shutil.rmtree(path)
 
 
 if __name__ == '__main__':
