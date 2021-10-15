@@ -1,5 +1,6 @@
 import csv
 import os
+import re
 import shutil
 import tokenize
 from bisect import bisect_left
@@ -35,6 +36,10 @@ def findStudentID(text):
     return tail
 
 
+def findStudentName(text):
+    return re.search(r"^.+:(.+)$", text).group(1).strip()
+
+
 def createMessagePopUpBox(text):
     msg = QMessageBox()
     msg.setWindowTitle("Error")
@@ -55,6 +60,14 @@ class Window(QtWidgets.QMainWindow):
         self.currentStudentDirectory = ""
         self.currentStudentGradesSubmitted = False
         self.programStarted = True  # just a flag when we start program
+
+        self.studentNameLayoutText = QLabel("Student Name: ")
+        self.studentNameLayoutTextSetBox = QLineEdit()
+        self.studentNameLayoutTextSetBox.setText("")
+
+        self.studentNameLayout = QHBoxLayout()
+        self.studentNameLayout.addWidget(self.studentNameLayoutText)
+        self.studentNameLayout.addWidget(self.studentNameLayoutTextSetBox)
 
         self.usernameLayoutText = QLabel("Student Username: ")
         self.usernameLayoutTextSetBox = QLineEdit()
@@ -94,6 +107,7 @@ class Window(QtWidgets.QMainWindow):
         self.compileButton = QPushButton('Compile Report')
 
         self.verticalLayout = QVBoxLayout()
+        self.verticalLayout.addLayout(self.studentNameLayout)
         self.verticalLayout.addLayout(self.usernameLayout)
         self.verticalLayout.addLayout(self.idLayout)
         self.verticalLayout.addLayout(self.feedbackLayout)
@@ -117,10 +131,20 @@ class Window(QtWidgets.QMainWindow):
     def submitGrades(self):
         # used to specify Order of output
         scaleFactor = 10
-        columnNames = ["Student ID", "Grade", "Feedback"]
-        data = {'Student ID': [self.idLayoutTextSetBox.text()], "Grade": [
-            int(self.gradeLayoutTextSetBox.text()) * scaleFactor],
-                "Feedback": [self.feedbackLayoutTextSetBox.text()]}
+        columnNames = ["First name", "Surname", "ID number", "Grade", "Feedback"]
+        firstName, lastName = "", ""
+        if self.studentNameLayoutTextSetBox.text():
+            firstName, lastName = self.studentNameLayoutTextSetBox.text().split(" ", 1)
+
+        data = {
+            "First name": firstName,
+            "Surname": lastName,
+            "ID number": self.idLayoutTextSetBox.text(),
+            "Grade": [
+                int(self.gradeLayoutTextSetBox.text()) * scaleFactor
+            ],
+            "Feedback": self.feedbackLayoutTextSetBox.text()
+        }
 
         df = pd.DataFrame(data)
         gradeHelperCSVPath = os.path.join(constants.LAB_DIRECTORY,
@@ -155,7 +179,7 @@ class Window(QtWidgets.QMainWindow):
             self.gradedStudentDirectories[0:self.currentStudentGradedIndex] = [True] * self.currentStudentGradedIndex
             self.loadStudentInfo(nextUngradedStudent)
             self.loadDirectoryWithStudentFiles(nextUngradedStudent)
-            self.clearGrades()
+            self.clearFields()
         else:
             createMessagePopUpBox("Grades have not been submitted yet")
         self.programStarted = False
@@ -166,24 +190,38 @@ class Window(QtWidgets.QMainWindow):
             createMessagePopUpBox("Could not find next student")
             return
 
+        self.usernameLayoutTextSetBox.setText(studentUsername)
+
         if not os.path.exists(os.path.join(constants.LAB_DIRECTORY, studentUsername,
                                            constants.FILE_NAME)):
             createMessagePopUpBox(f"Could not find student {studentUsername}'s files")
+            self.idLayoutTextSetBox.setText("0")
             return
 
         filePath = os.path.join(constants.LAB_DIRECTORY, studentUsername,
                                 constants.FILE_NAME)
         file = open(filePath, "rb")
-        commentWithStudentID = None
+        commentTypes = {}
         for tokenType, token, start, end, line in tokenize.tokenize(file.readline):
-            if tokenType == tokenize.COMMENT and "id" in token.lower() and "student" in token.lower():
-                commentWithStudentID = token
-        if not commentWithStudentID:
-            createMessagePopUpBox(f"Check {studentUsername}'s folder. Could not find student ID")
-            return
-        studentID = findStudentID(commentWithStudentID)
+            if tokenType == tokenize.COMMENT:
+                tokenLowercase = token.lower()
+                if "student" in tokenLowercase:
+                    if "id" in tokenLowercase:
+                        commentTypes["student_id"] = token
+                    elif "name" in tokenLowercase:
+                        commentTypes["student_name"] = token
+                if "student_name" not in commentTypes:
+                    if "author" in tokenLowercase:
+                        commentTypes["student_name"] = token
 
-        self.usernameLayoutTextSetBox.setText(studentUsername)
+        if "student_id" not in commentTypes or "student_name" not in commentTypes:
+            createMessagePopUpBox(f"Check {studentUsername}'s folder. Could not find student ID/name")
+            return
+
+        student_name = findStudentName(commentTypes["student_name"])
+        studentID = findStudentID(commentTypes["student_id"])
+
+        self.studentNameLayoutTextSetBox.setText(student_name)
         self.idLayoutTextSetBox.setText(studentID)
 
     def loadDirectoryWithStudentFiles(self, studentUsername):
@@ -197,8 +235,9 @@ class Window(QtWidgets.QMainWindow):
                 f"Check the student directory; Could not load student's directory into "
                 f"working directory: {constants.WORKING_DIRECTORY}")
 
-    # function to clear grades in the textboxes
-    def clearGrades(self):
+    # function to clear fields in the textboxes
+    def clearFields(self):
+        self.feedbackLayoutTextSetBox.setText("")
         self.gradeLayoutTextSetBox.setText("0")
 
     # function will run through all directories in self.studentDirectories load the csvs and output a final csv in the eclass format
@@ -212,12 +251,18 @@ class Window(QtWidgets.QMainWindow):
                 try:
                     with open(perStudentCSVPath) as f:
                         reader = list(csv.reader(f, delimiter=','))[1:][0][1:]
-                        studentInfo = {'studentId': reader[0], "grade": reader[1], "feedback": reader[2]}
+                        studentInfo = {
+                            "First name": reader[0],
+                            "Surname": reader[1],
+                            "ID number": reader[2],
+                            "Grade": reader[3],
+                            "Feedback": reader[4]
+                        }
                         classGrades.append(studentInfo)
                 except Exception as e:
                     createMessagePopUpBox(str(e))
 
-        df = pd.DataFrame(classGrades).set_index('studentId')
+        df = pd.DataFrame(classGrades).set_index("First name")
         df.to_csv(compiledReportPath)
 
 
