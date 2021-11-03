@@ -2,7 +2,7 @@ import os
 from bisect import bisect_left
 
 from PyQt5 import QtWidgets
-from PyQt5.QtGui import QIntValidator
+from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import QLabel, QLineEdit, QHBoxLayout, QWidget, QVBoxLayout, QPushButton, QMessageBox
 
 import constants
@@ -68,7 +68,7 @@ class Window(QtWidgets.QMainWindow):
 
         self._grade_layout_text = QLabel("Grade (0 - 10): ")
         self._grade_layout_text_set_box = QLineEdit(self)
-        self._grade_layout_text_set_box.setValidator(QIntValidator())
+        self._grade_layout_text_set_box.setValidator(QDoubleValidator(0, 10, 1))
         self._grade_layout_text_set_box.setText("0")
 
         self._grade_layout = QHBoxLayout()
@@ -109,13 +109,19 @@ class Window(QtWidgets.QMainWindow):
         columns = ["First name", "Surname", "ID number", "Grade", "Feedback"]
         first_name, last_name = "", ""
         if self._student_name_layout_text_set_box.text():
-            first_name, last_name = self._student_name_layout_text_set_box.text().split(" ", 1)
+            try:
+                first_name, last_name = self._student_name_layout_text_set_box.text().split(" ", 1)
+            except ValueError:
+                create_message_pop_up_box(
+                    "Could not find either first or last name, please check student files or input random last "
+                    "name (e.g John -> John Smith)"
+                )
 
         row_values = [
             first_name,
             last_name,
             self._id_layout_text_set_box.text(),
-            int(self._grade_layout_text_set_box.text()) * scale_factor,
+            int(float(self._grade_layout_text_set_box.text()) * scale_factor),
             self._feedback_layout_text_set_box.text()
         ]
         try:
@@ -135,6 +141,7 @@ class Window(QtWidgets.QMainWindow):
                 return i
             else:
                 return -1
+
         if self._current_student_grades_submitted or self._program_started:
             try:
                 student = load_next_student(self._student_directories)
