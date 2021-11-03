@@ -1,5 +1,6 @@
 # Project exclude paths
 /venv/
+FinalGrades.csv
 /WD
 /lab*
 .idea/
