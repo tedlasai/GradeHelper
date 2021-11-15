@@ -116,6 +116,7 @@ class Window(QtWidgets.QMainWindow):
                     "Could not find either first or last name, please check student files or input random last "
                     "name (e.g John -> John Smith)"
                 )
+                return
 
         row_values = [
             first_name,
