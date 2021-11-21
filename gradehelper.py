@@ -159,6 +159,7 @@ class Window(QtWidgets.QMainWindow):
         else:
             create_message_pop_up_box("Grades have not been submitted yet")
         self._program_started = False
+        self._current_student_grades_submitted = False
 
     # function to clear fields in the textboxes
     def clear_fields(self):
