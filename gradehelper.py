@@ -24,6 +24,18 @@ def create_message_pop_up_box(text):
 
 
 # pyqt window
+def create_layout_with_widget(label):
+    widget = QLabel(label)
+    layout_text_set_box = QLineEdit()
+    layout_text_set_box.setText("")
+
+    layout = QHBoxLayout()
+    layout.addWidget(widget)
+    layout.addWidget(layout_text_set_box)
+
+    return layout
+
+
 class Window(QtWidgets.QMainWindow):
 
     def __init__(self):
@@ -34,46 +46,25 @@ class Window(QtWidgets.QMainWindow):
         self._current_student_grades_submitted = False
         self._program_started = True  # just a flag when we start program
 
-        self._student_name_layout_text = QLabel("Student Name: ")
-        self._student_name_layout_text_set_box = QLineEdit()
-        self._student_name_layout_text_set_box.setText("")
+        self._student_name_layout = create_layout_with_widget("Student Name: ")
+        self._username_layout = create_layout_with_widget("Student Username: ")
+        self._id_layout = create_layout_with_widget("Student ID: ")
+        self._feedback_layout = create_layout_with_widget("Feedback: ")
 
-        self._student_name_layout = QHBoxLayout()
-        self._student_name_layout.addWidget(self._student_name_layout_text)
-        self._student_name_layout.addWidget(self._student_name_layout_text_set_box)
+        tasks = 5
+        self._grade_layouts = []
+        self._grade_layout_set_boxes = []
+        for i in range(tasks):
+            grade_layout_text = QLabel(f"Grade {i}: ")
+            grade_layout_text_set_box = QLineEdit(self)
+            grade_layout_text_set_box.setValidator(QDoubleValidator(0, 10, 1))
+            grade_layout_text_set_box.setText("0")
 
-        self._username_layout_text = QLabel("Student Username: ")
-        self._username_layout_text_set_box = QLineEdit()
-        self._username_layout_text_set_box.setText("")
+            grade_layout = QHBoxLayout()
+            grade_layout.addWidget(grade_layout_text)
+            grade_layout.addWidget(grade_layout_text_set_box)
 
-        self._username_layout = QHBoxLayout()
-        self._username_layout.addWidget(self._username_layout_text)
-        self._username_layout.addWidget(self._username_layout_text_set_box)
-
-        self._id_layout_text = QLabel("Student ID: ")
-        self._id_layout_text_set_box = QLineEdit()
-        self._id_layout_text_set_box.setText("0")
-
-        self._id_layout = QHBoxLayout()
-        self._id_layout.addWidget(self._id_layout_text)
-        self._id_layout.addWidget(self._id_layout_text_set_box)
-
-        self._feedback_layout_text = QLabel("Feedback: ")
-        self._feedback_layout_text_set_box = QLineEdit()
-        self._feedback_layout_text_set_box.setText("")
-
-        self._feedback_layout = QHBoxLayout()
-        self._feedback_layout.addWidget(self._feedback_layout_text)
-        self._feedback_layout.addWidget(self._feedback_layout_text_set_box)
-
-        self._grade_layout_text = QLabel("Grade (0 - 10): ")
-        self._grade_layout_text_set_box = QLineEdit(self)
-        self._grade_layout_text_set_box.setValidator(QDoubleValidator(0, 10, 1))
-        self._grade_layout_text_set_box.setText("0")
-
-        self._grade_layout = QHBoxLayout()
-        self._grade_layout.addWidget(self._grade_layout_text)
-        self._grade_layout.addWidget(self._grade_layout_text_set_box)
+            self._grade_layouts.append(grade_layout)
 
         submitButton = QPushButton('Submit Grades')
         nextButton = QPushButton('Next Student')
@@ -84,7 +75,8 @@ class Window(QtWidgets.QMainWindow):
         verticalLayout.addLayout(self._username_layout)
         verticalLayout.addLayout(self._id_layout)
         verticalLayout.addLayout(self._feedback_layout)
-        verticalLayout.addLayout(self._grade_layout)
+        for layout in self._grade_layouts:
+            verticalLayout.addLayout(layout)
 
         verticalLayout.addWidget(submitButton)
         verticalLayout.addWidget(nextButton)
@@ -102,29 +94,31 @@ class Window(QtWidgets.QMainWindow):
 
     # this function should write out grades to each folder in a csv file per student
     def submit_grades(self):
-        scale_factor = 10
         student_grade_path = os.path.join(constants.LAB_DIRECTORY,
                                           self._student_directories[self._current_student_graded_index],
                                           constants.CSV_FILE_NAME)
         columns = ["First name", "Surname", "ID number", "Grade", "Feedback"]
         first_name, last_name = "", ""
-        if self._student_name_layout_text_set_box.text():
+        if self._student_name_layout.itemAt(1).widget().text():
             try:
-                first_name, last_name = self._student_name_layout_text_set_box.text().split(" ", 1)
+                first_name, last_name = self._student_name_layout.itemAt(1).widget().text().split(" ", 1)
             except ValueError:
                 create_message_pop_up_box(
                     "Could not find either first or last name, please check student files or input random last "
                     "name (e.g John -> John Smith)"
                 )
                 return
+        grades = self.get_grades()
 
         row_values = [
             first_name,
             last_name,
-            self._id_layout_text_set_box.text(),
-            int(float(self._grade_layout_text_set_box.text()) * scale_factor),
-            self._feedback_layout_text_set_box.text()
+            self._id_layout.itemAt(1).widget().text(),
         ]
+        for grade in grades:
+            row_values.append(grade)
+        self._feedback_layout.itemAt(1).widget().text()
+        # TODO: modify row and columns
         try:
             submit_grades(student_grade_path, columns, row_values)
         except ValueError as e:
@@ -132,6 +126,12 @@ class Window(QtWidgets.QMainWindow):
 
         self._current_student_grades_submitted = True
         self.clear_fields()
+
+    def get_grades(self):
+        grades = []
+        for layout in self._grade_layouts:
+            grades.append(int(float(layout.itemAt(1).widget().text()) * constants.SCALE_FACTOR))
+        return grades
 
     # Gets information for next student in the list that doesn't have a CSV already stored in the folder and replaces
     # working directory with next student's files
@@ -148,9 +148,9 @@ class Window(QtWidgets.QMainWindow):
                 student = load_next_student(self._student_directories)
                 if not student["error_message"]:
                     self._current_student_graded_index = binary_search(self._student_directories, student["username"])
-                    self._username_layout_text_set_box.setText(student["username"])
-                    self._student_name_layout_text_set_box.setText(student["name"])
-                    self._id_layout_text_set_box.setText(student["id"])
+                    self._username_layout.itemAt(1).widget().setText(student["username"])
+                    self._student_name_layout.itemAt(1).widget().setText(student["name"])
+                    self._id_layout.itemAt(1).widget().setText(student["id"])
                 else:
                     create_message_pop_up_box("\n".join(student["error_message"]))
             except ValueError as e:
@@ -163,8 +163,8 @@ class Window(QtWidgets.QMainWindow):
 
     # function to clear fields in the textboxes
     def clear_fields(self):
-        self._feedback_layout_text_set_box.setText("")
-        self._grade_layout_text_set_box.setText("0")
+        self._feedback_layout.itemAt(1).widget().setText("")
+        self._grade_layout.itemAt(1).widget().setText("0")
 
     # function will run through all directories in self.studentDirectories load the csvs and output a final csv in
     # the eclass format
