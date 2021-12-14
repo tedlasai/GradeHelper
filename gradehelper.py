@@ -36,6 +36,10 @@ def create_layout_with_widget(label):
     return layout
 
 
+def layout_edit_widget(layout):
+    return layout.itemAt(1).widget()
+
+
 class Window(QtWidgets.QMainWindow):
 
     def __init__(self):
@@ -46,15 +50,18 @@ class Window(QtWidgets.QMainWindow):
         self._current_student_grades_submitted = False
         self._program_started = True  # just a flag when we start program
 
+        self._columns = ["First name", "Surname", "ID number", "Feedback"]
+        for i in range(constants.TASKS):
+            self._columns.append(f"Grade {i}")
+
         self._student_name_layout = create_layout_with_widget("Student Name: ")
         self._username_layout = create_layout_with_widget("Student Username: ")
         self._id_layout = create_layout_with_widget("Student ID: ")
         self._feedback_layout = create_layout_with_widget("Feedback: ")
 
-        tasks = 5
         self._grade_layouts = []
         self._grade_layout_set_boxes = []
-        for i in range(tasks):
+        for i in range(constants.TASKS):
             grade_layout_text = QLabel(f"Grade {i}: ")
             grade_layout_text_set_box = QLineEdit(self)
             grade_layout_text_set_box.setValidator(QDoubleValidator(0, 10, 1))
@@ -97,11 +104,11 @@ class Window(QtWidgets.QMainWindow):
         student_grade_path = os.path.join(constants.LAB_DIRECTORY,
                                           self._student_directories[self._current_student_graded_index],
                                           constants.CSV_FILE_NAME)
-        columns = ["First name", "Surname", "ID number", "Grade", "Feedback"]
+
         first_name, last_name = "", ""
-        if self._student_name_layout.itemAt(1).widget().text():
+        if layout_edit_widget(self._student_name_layout).text():
             try:
-                first_name, last_name = self._student_name_layout.itemAt(1).widget().text().split(" ", 1)
+                first_name, last_name = layout_edit_widget(self._student_name_layout).text().split(" ", 1)
             except ValueError:
                 create_message_pop_up_box(
                     "Could not find either first or last name, please check student files or input random last "
@@ -113,14 +120,14 @@ class Window(QtWidgets.QMainWindow):
         row_values = [
             first_name,
             last_name,
-            self._id_layout.itemAt(1).widget().text(),
+            layout_edit_widget(self._id_layout).text(),
+            layout_edit_widget(self._feedback_layout).text()
         ]
         for grade in grades:
             row_values.append(grade)
-        self._feedback_layout.itemAt(1).widget().text()
-        # TODO: modify row and columns
+
         try:
-            submit_grades(student_grade_path, columns, row_values)
+            submit_grades(student_grade_path, self._columns, row_values)
         except ValueError as e:
             create_message_pop_up_box(e)
 
@@ -129,8 +136,8 @@ class Window(QtWidgets.QMainWindow):
 
     def get_grades(self):
         grades = []
-        for layout in self._grade_layouts:
-            grades.append(int(float(layout.itemAt(1).widget().text()) * constants.SCALE_FACTOR))
+        for grade_layout in self._grade_layouts:
+            grades.append(int(float(layout_edit_widget(grade_layout).text()) * constants.SCALE_FACTOR))
         return grades
 
     # Gets information for next student in the list that doesn't have a CSV already stored in the folder and replaces
@@ -148,9 +155,9 @@ class Window(QtWidgets.QMainWindow):
                 student = load_next_student(self._student_directories)
                 if not student["error_message"]:
                     self._current_student_graded_index = binary_search(self._student_directories, student["username"])
-                    self._username_layout.itemAt(1).widget().setText(student["username"])
-                    self._student_name_layout.itemAt(1).widget().setText(student["name"])
-                    self._id_layout.itemAt(1).widget().setText(student["id"])
+                    layout_edit_widget(self._username_layout).setText(student["username"])
+                    layout_edit_widget(self._student_name_layout).setText(student["name"])
+                    layout_edit_widget(self._id_layout).setText(student["id"])
                 else:
                     create_message_pop_up_box("\n".join(student["error_message"]))
             except ValueError as e:
@@ -163,14 +170,15 @@ class Window(QtWidgets.QMainWindow):
 
     # function to clear fields in the textboxes
     def clear_fields(self):
-        self._feedback_layout.itemAt(1).widget().setText("")
-        self._grade_layout.itemAt(1).widget().setText("0")
+        layout_edit_widget(self._feedback_layout).setText("")
+        for grade_layout in self._grade_layouts:
+            layout_edit_widget(grade_layout).setText("0")
 
     # function will run through all directories in self.studentDirectories load the csvs and output a final csv in
     # the eclass format
     def compile_report(self):
         response = compile_grade_report(self._student_directories, constants.LAB_DIRECTORY,
-                                        constants.FINAL_GRADE_REPORT_PATH)
+                                        constants.FINAL_GRADE_REPORT_PATH, self._columns)
         if response["error"]:
             create_message_pop_up_box(response["error"])
 
