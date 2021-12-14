@@ -52,7 +52,7 @@ class Window(QtWidgets.QMainWindow):
 
         self._columns = ["First name", "Surname", "ID number", "Feedback"]
         for i in range(constants.TASKS):
-            self._columns.append(f"Grade {i}")
+            self._columns.append(f"Task {i}")
 
         self._student_name_layout = create_layout_with_widget("Student Name: ")
         self._username_layout = create_layout_with_widget("Student Username: ")
@@ -62,7 +62,7 @@ class Window(QtWidgets.QMainWindow):
         self._grade_layouts = []
         self._grade_layout_set_boxes = []
         for i in range(constants.TASKS):
-            grade_layout_text = QLabel(f"Grade {i}: ")
+            grade_layout_text = QLabel(f"Task {i}: ")
             grade_layout_text_set_box = QLineEdit(self)
             grade_layout_text_set_box.setValidator(QDoubleValidator(0, 10, 1))
             grade_layout_text_set_box.setText("0")
