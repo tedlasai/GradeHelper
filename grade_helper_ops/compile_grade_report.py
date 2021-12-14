@@ -6,7 +6,7 @@ import pandas as pd
 import constants
 
 
-def compile_grade_report(student_directories, src_path, final_grade_report_path):
+def compile_grade_report(student_directories, src_path, final_grade_report_path, columns):
     class_grades = []
     grade_report_files = 0
     error_msg = ''
@@ -17,14 +17,13 @@ def compile_grade_report(student_directories, src_path, final_grade_report_path)
             try:
                 with open(student_grade_path) as f:
                     reader = list(csv.reader(f, delimiter=','))[1:][0][1:]
-                    studentInfo = {
-                        "First name": reader[0],
-                        "Surname": reader[1],
-                        "ID number": reader[2],
-                        "Grade": reader[3],
-                        "Feedback": reader[4]
-                    }
-                    class_grades.append(studentInfo)
+                    if len(columns) != len(reader):
+                        error_msg = "Discrepancy between columns and column values"
+                        break
+                    student_info = {}
+                    for i in range(len(columns)):
+                        student_info[columns[i]] = reader[i]
+                    class_grades.append(student_info)
             except Exception as e:
                 error_msg = str(e)
     if grade_report_files != len(student_directories):

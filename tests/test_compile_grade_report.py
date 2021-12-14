@@ -32,7 +32,8 @@ class TestCompileGradeReport(unittest.TestCase):
             data_frame = pd.DataFrame(csv_data)
             data_frame.to_csv(csv_path, columns=column_names)
 
-        response = compile_grade_report(os.listdir(path), path, os.path.join(path, constants.FINAL_GRADE_REPORT_PATH))
+        response = compile_grade_report(os.listdir(path), path, os.path.join(path, constants.FINAL_GRADE_REPORT_PATH),
+                                        column_names)
         self.assertFalse(response["error"])
         shutil.rmtree(path)
 
