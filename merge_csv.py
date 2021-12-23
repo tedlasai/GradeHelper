@@ -2,7 +2,11 @@ import pandas as pd
 
 
 def merge_csv(csv1, csv2):
-    return pd.merge(csv1, csv2, on=["First name", "Surname", "ID number"])
+    csv1["ID number"] = csv1["ID number"].astype("Int64")
+    csv2["ID number"] = csv2["ID number"].astype("Int64")
+    df = pd.merge(csv1, csv2, on=["First name", "Surname", "ID number"])
+    df["ID number"] = df["ID number"].astype("Int64")
+    return df
 
 
 def merge_feedback_columns(df, columns):
